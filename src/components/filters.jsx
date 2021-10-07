@@ -8,77 +8,12 @@ import {
   EnvironmentOutlined,
 } from "@ant-design/icons";
 import "antd/dist/antd.css";
-import usePaginationFromURL from "./usePaginationFromURL";
+import DataCardMap from "./CardMapping";
+import DataCard from "./Card";
 
-const DataCard = () => {
-  <div>
-    <Space direction="horizontal">
-      <Card
-        title="Card title"
-        bordered={true}
-        style={{ width: 400, margin: "8px 10px 8px 10px" }}
-      >
-        <p>Card content</p>
-        <p>Card content</p>
-        <p>Card content</p>
-      </Card>
-    </Space>
-  </div>;
-};
-
-const DataCardMap = () => {
-  const { data, incrementPage, hasMoreData } =
-    usePaginationFromURL(
-    "https://search-washingtond8-prod-kz2b5bkdr37mxlfu5v3jksydom.us-east-1.es.amazonaws.com/elasticsearch_index_washingtond8_new_washington_dc"   //api link
-    );
-
-  console.log("===DATA===");
-  console.log(data);
-  return (
-    <div>
-      {data.map((user) => (
-        <DataCard
-          key={user.id}
-          
-        />
-      ))}
-      {hasMoreData && (
-        <button
-          style={{
-            backgroundColor: "",
-            alignItems:"bottom",
-            color: "white",
-            width: "100px",
-            // height: "75px",
-            frontWeight: 900,
-            cursor: "pointer",
-            boxSizing: "border-box",
-          }}
-          onClick={incrementPage}
-        >
-          LoadMore
-        </button>
-      )}
-    </div>
-  );
-};
-
-
-const state = {
-  value: 1,
-};
-
-const  onChange = (e) => {
-  console.log('radio checked', e.target.value);
-  this.setState({
-    value: e.target.value,
-  });
-};
 
 const Filters = () => {
- 
-  const {value}= state;
-  
+   
   return (
     <div className="container" style={{ margin: "5%", display: "flex" }}>
       <Card title="Filters" style={{ width: "30%" }}>
@@ -172,6 +107,7 @@ const Filters = () => {
             </span>
           </Button>
         </div>
+        <DataCard/>
         <DataCardMap/>
       </div>
     </div>
