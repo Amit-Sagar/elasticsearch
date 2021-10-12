@@ -1,5 +1,6 @@
 import './App.css';
 import Filters from './components/filters';
+// import MainCard from "./paginationMapping/mainCrad";
 
 function App() {
   return (
@@ -8,6 +9,7 @@ function App() {
       <Filters/>
       {/* <Searchbar/> */}
       {/* <Card/> */}
+      {/* <MainCard/> */}
       </div>
     </div>
   );
