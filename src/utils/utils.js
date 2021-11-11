@@ -1,7 +1,7 @@
 const UTILS = {
     queryStringParse: function(string) {
       let parsed = {};
-      if (string != "") {
+      if (string !== "") {
         string = string.substring(string.indexOf("?") + 1);
         let p1 = string.split("&");
         p1.map(function(value) {

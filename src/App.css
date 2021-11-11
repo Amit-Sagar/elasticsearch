@@ -1,0 +1,24 @@
+.App {
+    font-family: sans-serif;
+    text-align: center;
+    height:80vh;
+  }
+  
+  .leaflet-container {
+    height: 100%;
+    width: 100%;
+  }
+  .ant-carousel .slick-prev,
+  .ant-carousel .slick-next
+   {
+    font-size: inherit;
+    color: currentColor;
+    
+  }
+  /* 
+  .ant-carousel .slick-prev:hover,
+  .ant-carousel .slick-next:hover
+     */
+  body{
+    background-color: antiquewhite;
+  }

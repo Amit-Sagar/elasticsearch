@@ -1,16 +1,12 @@
-import './App.css';
-import Filters from './components/filters';
-// import MainCard from "./paginationMapping/mainCrad";
+// import Cards from './components/meetingListingPage';
+// import "./App.css";
+import Cards from './components/Card';
+
 
 function App() {
   return (
-    <div className="App" >
-      <div className="filterContainer">
-      <Filters/>
-      {/* <Searchbar/> */}
-      {/* <Card/> */}
-      {/* <MainCard/> */}
-      </div>
+    <div className="App">
+      <Cards/>
     </div>
   );
 }
