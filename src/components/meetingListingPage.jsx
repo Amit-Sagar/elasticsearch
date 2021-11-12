@@ -58,6 +58,7 @@ export class Cards extends Component {
       capacityFilter:[],
       meetingServicesFilterList:[],
       meetingServicesFilter:[],
+      view: "grid",
       filterFields: [
         "title",
         "body",
@@ -80,42 +81,32 @@ export class Cards extends Component {
   }
 
   onChangePage = (page) => {
+    console.log(page);
     this.setState(
       {
-        filter : page,
         current_page: page - 1,
+        isLoading: true,
       },
       () =>{
-        // if (this.state.filter != "") {
-        //   this.setState(
-        //     {
-        //       current_page: this.state.current_page,
-        //       isLoading: true,
-        //       search: true,
-        //       searchedText: [this.state.filter, this.state.refine].join(" ").trim(),
-        //       items: [],
-        //     },
-        //     () => {
-        //       if (window.history.pushState) {
-        //         var newurl =
-        //           window.location.protocol +
-        //           "//" +
-        //           window.location.host +
-        //           window.location.pathname +
-        //           "?q=" +
-        //           this.state.filter +
-        //           "&r=" +
-        //           this.state.refine;
-        //         window.history.pushState({ path: newurl }, "", newurl);
-        //       }
+              if (window.history.pushState) {
+                var newurl =
+                  window.location.protocol +
+                  "//" +
+                  window.location.host +
+                  window.location.pathname +
+                  "?q=" +
+                  this.state.filter +
+                  "&page=" +
+                  page +
+                  "&r=" +
+                  this.state.refine;
+                window.history.pushState({ path: newurl }, "", newurl);
+              }
               let requestOptions = this.createRequestOptions();
               this.modifyHttpRequest(requestOptions);
-            // }
-          // );
-        // }
-      }
-    );
-  };
+            }
+          );
+        }
 
   componentDidMount() {
     let paramsQuery = Utils.queryStringParse(decodeURI(window.location.search));
@@ -159,7 +150,6 @@ export class Cards extends Component {
     )
       .then(async (response) => {
         const data = await response.json();
-        // console.log(items)
         if (!response.ok) {
           const error = (data && data.message) || response.status;
           this.setState({
@@ -171,7 +161,6 @@ export class Cards extends Component {
           });
           return Promise.reject(error);
         }
-        // console.log(data)
         this.setState({
           items: data.hits.hits,
           totalCount: data.hits.total.value,
@@ -254,153 +243,47 @@ export class Cards extends Component {
       });
   };
   createRequestOptions = () => {
-    // console.log(this.state.current_page);
-    if (this.state.filter === "") {
-      let requestbody = {
-        from: this.state.per_page * this.state.current_page,
-        size: this.state.per_page,
-        query: {
-          bool: {
-            filter: [],
-          },
+    let requestbody = {
+      from: this.state.per_page * this.state.current_page,
+      size: this.state.per_page,
+      query: {
+        bool: {
+          filter: [],
         },
-      };
-      if (this.state.isFilterType === "date") {
-        requestbody["sort"] = [{ created: { order: "desc" } }];
-      }
-      if (this.state.neighbourhoodFilter.length) {
-        requestbody["query"].bool.filter.push({
-          terms: {
-            neighbourhood: this.state.neighbourhoodFilter,
-          },
-        });
-      }
-      if (this.state.categoryFilter.length) {
-        requestbody["query"].bool.filter.push({
-          terms: {
-            category: this.state.categoryFilter,
-          },
-        });
-      }
-      if (this.state.amenitiesFilter.length) {
-        requestbody["query"].bool.filter.push({
-          terms: {
-            amenities: this.state.amenitiesFilter,
-          },
-        });
-      }
-      let requestOptions = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestbody),
-      };
-      return requestOptions;
-    } else {
-      let requestbody = {};
-      if (this.state.refine === "") {
-        requestbody = {
-          from: this.state.per_page * this.state.current_page,
-          size: this.state.per_page,
-          query: {
-            bool: {
-              must: [
-                {
-                  exists: {
-                    field: "nid",
-                  },
-                },
-                {
-                  match: {
-                    status: "true",
-                  },
-                },
-                {
-                  multi_match: {
-                    query: this.state.filter,
-                    type: "best_fields",
-                    operator: "and",
-                    fields: this.state.filterFields,
-                  },
-                },
-              ],
-            },
-          },
-        };
-      } else {
-        requestbody = {
-          from: this.state.per_page * this.state.current_page,
-          size: this.state.per_page,
-          query: {
-            bool: {
-              must: [
-                {
-                  exists: {
-                    field: "nid",
-                  },
-                },
-                {
-                  match: {
-                    status: "true",
-                  },
-                },
-                {
-                  multi_match: {
-                    query: this.state.filter,
-                    type: "best_fields",
-                    operator: "and",
-                    fields: this.state.filterFields,
-                  },
-                },
-              ],
-              filter: [
-                {
-                  multi_match: {
-                    query: this.state.refine,
-                    lenient: true,
-                    type: "phrase_prefix",
-                    fields: this.state.filterFields,
-                  },
-                },
-              ],
-            },
-          },
-        };
-      }
-
-      if (this.state.isFilterType === "date") {
-        requestbody["sort"] = [{ created: { order: "desc" } }];
-      }
-      if (this.state.activeFilter.length && !(this.state.refine === "")) {
-        requestbody["query"]["bool"]["filter"].push({
-          terms: {
-            type: this.state.activeFilter,
-          },
-        });
-      } else if (this.state.activeFilter.length) {
-        requestbody["query"]["bool"]["filter"] = [
-          {
-            terms: {
-              type: this.state.activeFilter,
-            },
-          },
-        ];
-      }
-      let requestOptions = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestbody),
-      };
-      return requestOptions;
+      },
+    };
+    if (this.state.isFilterType === "date") {
+      requestbody["sort"] = [{ created: { order: "desc" } }];
     }
-  };
-  handleRefineChange = (event) => {
-    this.setState({ refine: event.target.value });
-  };
+    if (this.state.neighbourhoodFilter.length) {
+      requestbody["query"].bool.filter.push({
+        terms: {
+          neighbourhood: this.state.neighbourhoodFilter,
+        },
+      });
+    }
+    if (this.state.categoryFilter.length) {
+      requestbody["query"].bool.filter.push({
+        terms: {
+          category: this.state.categoryFilter,
+        },
+      });
+    }
+    if (this.state.amenitiesFilter.length) {
+      requestbody["query"].bool.filter.push({
+        terms: {
+          amenities: this.state.amenitiesFilter,
+        },
+      });
+    }
+    let requestOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestbody),
+    };
+    return requestOptions;
+};
 
-  viewDetailsHandler = (nid) => {
-    let url = "https://dev.washington-d8.oslabs.app" + "/node/" + nid;
-    window.location.href = `${url}`;
-  };
   onChange(value) {
     console.log(value);
     this.setState(
@@ -426,7 +309,6 @@ export class Cards extends Component {
 
   // ascending
   handleSortAsc(values) {
-    console.log("clicked");
     values.forEach((val) => {
       console.log("before", val._source.title);
     });
@@ -468,7 +350,6 @@ export class Cards extends Component {
     const { neighbourhoodFilterList, neighbourhoodFilter } = this.state;
     this.setState(
       {
-        filter: filter,
         neighbourhoodFilter: filter,
         current_page: 0,
         isLoading: true,
@@ -476,13 +357,12 @@ export class Cards extends Component {
         typeFlag: true,
       },
       () => {
-        if (this.state.filter === "") {
+        if (this.state.neighbourhoodFilter === "") {
           this.setState(
             {
               current_page: 0,
               isLoading: true,
               search: false,
-              searchedText: '',
               refine: '',
               items: [],
             },
@@ -498,7 +378,6 @@ export class Cards extends Component {
               current_page: 0,
               isLoading: true,
               search: true,
-              // searchedText: [this.state.filter, this.state.refine].join(" ").trim(),
               items: [],
             },
             () => {
@@ -508,10 +387,16 @@ export class Cards extends Component {
                   "//" +
                   window.location.host +
                   window.location.pathname +
-                  "?q=" +
-                  this.state.filter +
-                  "&r=" +
-                  this.state.refine;
+                  "?neighbourhood=" +
+                  this.state.neighbourhoodFilter+
+                  "&?loaction=" +
+                  this.state.categoryFilter+
+                  "&?amenities=" +
+                  this.state.amenitiesFilter+
+                  "&?capacity"+
+                  this.state.categoryFilter+
+                  "&?meetingService"+
+                  this.state.meetingServiceFilter
                 window.history.pushState({ path: newurl }, "", newurl);
               }
               let requestOptions = this.createRequestOptions();
@@ -527,7 +412,6 @@ export class Cards extends Component {
     const { categoryFilterList, categoryFilter } = this.state;
     this.setState(
       {
-        filter: [this.state.filter, category],
         categoryFilter: category,
         current_page: 0,
         isLoading: true,
@@ -541,8 +425,6 @@ export class Cards extends Component {
               current_page: 0,
               isLoading: true,
               search: false,
-              searchedText: '',
-              refine: '',
               items: [],
             },
             () => {
@@ -557,7 +439,6 @@ export class Cards extends Component {
               current_page: 0,
               isLoading: true,
               search: true,
-              // searchedText: [this.state.filter, this.state.refine].join(" ").trim(),
               items: [],
             },
             () => {
@@ -567,10 +448,16 @@ export class Cards extends Component {
                   "//" +
                   window.location.host +
                   window.location.pathname +
-                  "?q=" +
-                  this.state.filter +
-                  "&r=" +
-                  this.state.refine;
+                  "?neighbourhood=" +
+                  this.state.neighbourhoodFilter+
+                  "&?loaction=" +
+                  this.state.categoryFilter+
+                  "&?amenities=" +
+                  this.state.amenitiesFilter+
+                  "&?capacity"+
+                  this.state.categoryFilter+
+                  "&?meetingService"+
+                  this.state.meetingServiceFilter
                 window.history.pushState({ path: newurl }, "", newurl);
               }
               let requestOptions = this.createRequestOptions();
@@ -585,8 +472,7 @@ export class Cards extends Component {
   onAmenitiesFilterChange = (amenity) => {
     const { amenitiesFilterList, amenitiesFilter } = this.state;
     this.setState(
-      {
-        filter: [this.state.filter, amenity],
+      { 
         amenitiesFilter: amenity,
         current_page: 0,
         isLoading: true,
@@ -600,8 +486,6 @@ export class Cards extends Component {
               current_page: 0,
               isLoading: true,
               search: false,
-              searchedText: '',
-              refine: '',
               items: [],
             },
             () => {
@@ -616,7 +500,6 @@ export class Cards extends Component {
               current_page: 0,
               isLoading: true,
               search: true,
-              // searchedText: [this.state.filter, this.state.refine].join(" ").trim(),
               items: [],
             },
             () => {
@@ -626,10 +509,16 @@ export class Cards extends Component {
                   "//" +
                   window.location.host +
                   window.location.pathname +
-                  "?q=" +
-                  this.state.filter +
-                  "&r=" +
-                  this.state.refine;
+                  "?neighbourhood=" +
+                  this.state.neighbourhoodFilter+
+                  "&?loaction=" +
+                  this.state.categoryFilter+
+                  "&?amenities=" +
+                  this.state.amenitiesFilter+
+                  "&?capacity"+
+                  this.state.categoryFilter+
+                  "&?meetingService"+
+                  this.state.meetingServiceFilter
                 window.history.pushState({ path: newurl }, "", newurl);
               }
               let requestOptions = this.createRequestOptions();
@@ -644,7 +533,6 @@ export class Cards extends Component {
     const { capacityFilterList, capacityFilter } = this.state;
     this.setState(
       {
-        filter: [this.state.filter, capacity],
         amenitiesFilter: capacity,
         current_page: 0,
         isLoading: true,
@@ -658,8 +546,6 @@ export class Cards extends Component {
               current_page: 0,
               isLoading: true,
               search: false,
-              searchedText: '',
-              refine: '',
               items: [],
             },
             () => {
@@ -674,7 +560,6 @@ export class Cards extends Component {
               current_page: 0,
               isLoading: true,
               search: true,
-              // searchedText: [this.state.filter, this.state.refine].join(" ").trim(),
               items: [],
             },
             () => {
@@ -684,10 +569,16 @@ export class Cards extends Component {
                   "//" +
                   window.location.host +
                   window.location.pathname +
-                  "?q=" +
-                  this.state.filter +
-                  "&r=" +
-                  this.state.refine;
+                  "?neighbourhood=" +
+                  this.state.neighbourhoodFilter+
+                  "&?loaction=" +
+                  this.state.categoryFilter+
+                  "&?amenities=" +
+                  this.state.amenitiesFilter+
+                  "&?capacity"+
+                  this.state.categoryFilter+
+                  "&?meetingService"+
+                  this.state.meetingServiceFilter
                 window.history.pushState({ path: newurl }, "", newurl);
               }
               let requestOptions = this.createRequestOptions();
@@ -702,7 +593,6 @@ export class Cards extends Component {
     const { meetingServiceFilterList, meetingServiceFilter } = this.state;
     this.setState(
       {
-        filter: [this.state.filter, meeting],
         amenitiesFilter: meeting,
         current_page: 0,
         isLoading: true,
@@ -716,8 +606,6 @@ export class Cards extends Component {
               current_page: 0,
               isLoading: true,
               search: false,
-              searchedText: '',
-              refine: '',
               items: [],
             },
             () => {
@@ -732,7 +620,6 @@ export class Cards extends Component {
               current_page: 0,
               isLoading: true,
               search: true,
-              // searchedText: [this.state.filter, this.state.refine].join(" ").trim(),
               items: [],
             },
             () => {
@@ -742,10 +629,16 @@ export class Cards extends Component {
                   "//" +
                   window.location.host +
                   window.location.pathname +
-                  "?q=" +
-                  this.state.filter +
-                  "&r=" +
-                  this.state.refine;
+                  "?neighbourhood=" +
+                  this.state.neighbourhoodFilter+
+                  "&?loaction=" +
+                  this.state.categoryFilter+
+                  "&?amenities=" +
+                  this.state.amenitiesFilter+
+                  "&?capacity"+
+                  this.state.categoryFilter+
+                  "&?meetingService"+
+                  this.state.meetingServiceFilter
                 window.history.pushState({ path: newurl }, "", newurl);
               }
               let requestOptions = this.createRequestOptions();
@@ -887,6 +780,42 @@ export class Cards extends Component {
         </React.Fragment>
       );
     });
+    const showListItem=()=>{
+      this.setState(
+        {
+          view : "list",
+         //  isLoading :true
+        }
+      )
+ }
+
+ const showGridItem=()=>{
+   this.setState(
+     {
+       view : "grid",
+     }
+   )
+}
+const showMapView=()=>{
+this.setState(
+  {
+    view : "map",
+  }
+)
+}
+const view=()=>{
+if(this.state.view === "grid"){
+   return gridItem;
+}else if(this.state.view ==="list"){
+ return  listItem;
+}else{
+  return <div style={{ height: "600px" }}>
+  <MapView />
+</div>
+
+}
+}
+
 
     const pageNumbers = [];
     for (let i = 1; i <= Math.ceil(totalCount / per_page); i++) {
@@ -1058,7 +987,56 @@ export class Cards extends Component {
                   <SortDescendingOutlined />
                 </span>
               </Button>
-              <Tabs onChange={callback} type="card" tabPosition="right">
+              <div>
+                <Button onClick={showGridItem}>
+                  <span>
+                  <TableOutlined />
+                  </span>
+                </Button>
+                <Button onClick={showListItem}>
+                   <span>
+                   <OrderedListOutlined />
+                  </span>
+                  </Button>
+                  <Button onClick={showMapView}>
+                  <span>
+                  <EnvironmentOutlined />
+                    </span>
+                  </Button>
+              </div>
+              <div>
+              {items.length && !isLoading ? view() : (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <img
+                      className="loader"
+                      src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif"
+                      alt="Loader"
+                    />
+                  </div>
+                )}
+              </div>
+              <div>
+              {!isLoading && !isLoadingMore && totalCount > 6 && (
+                    <Pagination
+                      class="pagination"
+                      onChange={this.onChangePage}
+                      total={totalCount}
+                      defaultPageSize={per_page}
+                      showSizeChanger={false}
+                      hideOnSinglePage={true}
+                      defaultCurrent={this.state.current_page+1}
+                    />
+                  )}
+                </div>
+              {/* <Tabs onChange={callback} type="card" tabPosition="right">
                 <TabPane
                   tab={
                     <span>
@@ -1111,7 +1089,7 @@ export class Cards extends Component {
                     <MapView />
                   </div>
                 </TabPane>
-              </Tabs>
+              </Tabs> */}
             </div>
           </div>
         </div>
